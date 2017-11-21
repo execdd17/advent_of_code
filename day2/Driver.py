@@ -4,11 +4,6 @@ if __name__ == "__main__":
     keypad = KeyPad()
     keypad.add_all_transitions()
 
-    input_lines = """ULL
-        RRDDD
-        LURDL
-        UUUUD""".replace(" ", "").split("\n")
-
     # the correct answer is 78985
     file = open('day2_input.txt', 'r')
 
