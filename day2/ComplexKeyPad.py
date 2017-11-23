@@ -1,7 +1,7 @@
 class Cell(object):
-    def __init__(self, x, y, key):
-        self.x = x
-        self.y = y
+    def __init__(self, row, col, key):
+        self.row = row
+        self.col = col
         self.key = key
 
 
@@ -28,35 +28,35 @@ class ComplexKeyPad(object):
     NUM_ROWS = NUM_COLS = 5
 
     def __init__(self):
-        self.matrix = [[Cell(x, y, ComplexKeyPad.KEYS[x][y]) for y in range(ComplexKeyPad.NUM_ROWS)] for x in range(ComplexKeyPad.NUM_COLS)]
+        self.matrix = [[Cell(i, j, ComplexKeyPad.KEYS[i][j]) for j in range(ComplexKeyPad.NUM_ROWS)] for i in range(ComplexKeyPad.NUM_COLS)]
         self.current_cell = self.matrix[2][0]
 
     def push_up(self):
-        if (self.current_cell.x - 1) < 0:
+        if (self.current_cell.row - 1) < 0:
             return self.current_cell
 
-        intended_cell = self.matrix[self.current_cell.x - 1][self.current_cell.y]
+        intended_cell = self.matrix[self.current_cell.row - 1][self.current_cell.col]
         return self._set_new_cell_if_valid(intended_cell)
 
     def push_down(self):
-        if (self.current_cell.x + 1) >= ComplexKeyPad.NUM_ROWS:
+        if (self.current_cell.row + 1) >= ComplexKeyPad.NUM_ROWS:
             return self.current_cell
 
-        intended_cell = self.matrix[self.current_cell.x + 1][self.current_cell.y]
+        intended_cell = self.matrix[self.current_cell.row + 1][self.current_cell.col]
         return self._set_new_cell_if_valid(intended_cell)
 
     def push_right(self):
-        if (self.current_cell.y + 1) >= ComplexKeyPad.NUM_COLS:
+        if (self.current_cell.col + 1) >= ComplexKeyPad.NUM_COLS:
             return self.current_cell
 
-        intended_cell = self.matrix[self.current_cell.x][self.current_cell.y + 1]
+        intended_cell = self.matrix[self.current_cell.row][self.current_cell.col + 1]
         return self._set_new_cell_if_valid(intended_cell)
 
     def push_left(self):
-        if (self.current_cell.y - 1) < 0:
+        if (self.current_cell.col - 1) < 0:
             return self.current_cell
 
-        intended_cell = self.matrix[self.current_cell.x][self.current_cell.y - 1]
+        intended_cell = self.matrix[self.current_cell.row][self.current_cell.col - 1]
         return self._set_new_cell_if_valid(intended_cell)
 
     def _set_new_cell_if_valid(self, intended_cell):
