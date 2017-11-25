@@ -31,7 +31,7 @@ def main():
 
     # the correct answer is 78985 for part one
     # the correct answer is 57DD8 for part two
-    file = open('day2_input.txt', 'r')
+    file = open('puzzle_input.txt', 'r')
 
     if sys.argv[1] == '1':
         keypad = KeyPad()
