@@ -43,6 +43,28 @@ class Room(object):
     def is_real_room(self):
         return self._calculate_checksum() == self.checksum
 
+    def apply_shift_decipher(self):
+        return self._shift_helper("", self.name)
+
+    def _shift_helper(self, decrypted, encrypted):
+        if len(encrypted) == 0:
+            return decrypted
+
+        current_letter = encrypted[0]
+
+        if current_letter == "-":
+            decrypted += " "
+        else:
+            foo = self.sector_id % 26
+            shifted_letter = ord(current_letter) + foo
+
+            if shifted_letter > 122:                            # 122 is 'z'
+                decrypted += chr(96 + (shifted_letter - 122))   # 97 is 'a'
+            else:
+                decrypted += chr(ord(current_letter) + foo)
+
+        return self._shift_helper(decrypted, encrypted[1:])
+
     def _calculate_checksum(self):
 
         for letter in self.name.replace("-", ""):
