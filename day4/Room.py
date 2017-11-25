@@ -18,6 +18,11 @@ class Room(object):
 
     @staticmethod
     def _get_counts_dict(dict):
+        """
+        :param dict: A dictionary containing a letter mapped to how many occurrences in a room name
+        :return: A new dictionary containing the number of occurrences of a letter,
+        mapped to the matching list of letters with that amount
+        """
         new_dict = {}
 
         for letter, count in dict.iteritems():
@@ -41,9 +46,18 @@ class Room(object):
         self.letter_counts = {}
 
     def is_real_room(self):
+        """
+        A real room's checksum matches the algorithm described in the challenge
+        :return: True or False
+        """
         return self._calculate_checksum() == self.checksum
 
     def apply_shift_decipher(self):
+        """
+        Shifts each alphabetic character by the room's checksum, wrapping when necessary.
+        Dashes are replaced with spaces
+        :return: The decrypted name
+        """
         return self._shift_helper("", self.name)
 
     def _shift_helper(self, decrypted, encrypted):
@@ -55,13 +69,13 @@ class Room(object):
         if current_letter == "-":
             decrypted += " "
         else:
-            foo = self.sector_id % 26
-            shifted_letter = ord(current_letter) + foo
+            offset = self.sector_id % 26                        # 26 letters in the alphabet
+            shifted_letter = ord(current_letter) + offset
 
             if shifted_letter > 122:                            # 122 is 'z'
                 decrypted += chr(96 + (shifted_letter - 122))   # 97 is 'a'
             else:
-                decrypted += chr(ord(current_letter) + foo)
+                decrypted += chr(ord(current_letter) + offset)
 
         return self._shift_helper(decrypted, encrypted[1:])
 
