@@ -61,6 +61,16 @@ class TinyLCD(object):
 
         self.matrix[row_index] = modified_row
 
+    def get_total_activated(self):
+        total = 0
+
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self.matrix[i][j] == TinyLCD.ACTIVACTED_CHAR:
+                    total += 1
+
+        return total
+
     def __str__(self):
         pretty_lcd = ""
 
@@ -73,4 +83,3 @@ class TinyLCD(object):
             pretty_lcd += "\n"
 
         return pretty_lcd
-
