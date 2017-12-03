@@ -39,6 +39,7 @@ def main(input_line):
     print part1(input_line)
     print part2(input_line)
 
+
 if __name__ == "__main__":
     file = open('puzzle_input.txt', 'r')  # NOTE: column_length should be set to 8
     lines = file.readlines()
