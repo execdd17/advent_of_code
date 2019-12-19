@@ -1,78 +1,96 @@
+import scala.collection.mutable.ArrayBuffer
+
 case class Cell(wireNum: Int, representation:  Char)
 
 class Day3Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
 
   val wire1Movements: Array[String] = inputLines.head.split(',')
   val wire2Movements: Array[String] = inputLines(1).split(',')
-  val numRows = 30
-  val numCols = 30
-  val originRow = 15
-  val originCol = 15
-  val matrix: Array[Array[Cell]] = Array.ofDim[Cell](numRows,numCols)
-
-  for (i <- 0 until numRows) {
-    for (j <- 0 until numCols) {
-      matrix(i)(j) = Cell(0, '.')
-    }
-  }
-
-  matrix(originCol)(originRow) = Cell(0, 'O')
+  val numRows = 500
+  val numCols = 500
+  val originRow = 250
+  val originCol = 250
+  val matrix: Array[Array[Int]] = Array.ofDim[Int](numRows,numCols)
+  matrix(originRow)(originCol) = -1
 
   private def printMatrix(): Unit = {
     for (row <- 0 until numRows) {
       for (column <- 0 until numCols) {
-        print(matrix(row)(column).representation)
+        matrix(row)(column) match {
+          case -1 => print("O")
+          case 0 => print(".")
+          case 1 => print("*")
+          case 2 => print("X")
+        }
       }
       println()
     }
   }
 
-  private def populateWire(wireNum: Int, movements: Array[String]): Unit = {
+  private def populateWire(movements: Array[String]): Unit = {
     var currRow = originRow
     var currCol = originCol
-
     movements.foreach { movement =>
       val amount = movement.substring(1).toInt
 
       movement(0) match {
         case 'U' =>
           for (i <- 1 to amount) {
-            matrix(currRow - i)(currCol) = Cell(wireNum, '|')
+            matrix(currRow - i)(currCol) = matrix(currRow - i)(currCol) + 1
           }
           currRow -= amount
-          matrix(currRow)(currCol) = Cell(wireNum, '+')
         case 'D' =>
           for (i <- 1 to amount) {
-            matrix(currRow + i)(currCol) = Cell(wireNum, '|')
+            matrix(currRow + i)(currCol) = matrix(currRow + i)(currCol) + 1
           }
           currRow += amount
-          matrix(currRow)(currCol) = Cell(wireNum, '+')
         case 'L' =>
           for (i <- 1 to amount) {
-            matrix(currRow)(currCol - i) = Cell(wireNum, '-')
+            matrix(currRow)(currCol - i) = matrix(currRow)(currCol - i) + 1
           }
           currCol -= amount
-          matrix(currRow)(currCol) = Cell(wireNum, '+')
         case 'R' =>
           for (i <- 1 to amount) {
-            matrix(currRow)(currCol + i) = Cell(wireNum, '-')
+            matrix(currRow)(currCol + i) = matrix(currRow)(currCol + i) + 1
           }
           currCol += amount
-          matrix(currRow)(currCol) = Cell(wireNum, '+')
         case _ => throw new IllegalArgumentException("Invalid state")
       }
     }
   }
 
+  private def getShortestIntersectionDistance: Int = {
+    var shortest = Int.MaxValue
+    val list = ArrayBuffer.empty[Int]
+
+    for (row <- 0 until numRows) {
+      for (column <- 0 until numCols) {
+        if (matrix(row)(column) == 2) {
+          val distance = math.abs(originRow - row) + math.abs(originCol - column)
+          list += distance
+          println(s"Distance: $distance Origin: ($originRow)($originCol) Intersection: ($row)($column)")
+          if (distance < shortest) {
+            shortest = distance
+          }
+        }
+      }
+    }
+
+    println(list.sorted)
+    shortest
+  }
+
   override def solve(): Int = {
-//    val w1 = Array("R75","D30","R83","U83","L12","D49","R71","U7","L72")
-//    val w2 = Array("U62","R66","U55","R34","D71","R55","D58","R83")
-    val w1 = Array("R8","U5","L5","D3")
-    val w2 = Array("U7","R6","D4","L4")
-    populateWire(1,w1)
-    populateWire(2,w2)
-    printMatrix()
-    10000
+    val w1 = Array("R75","D30","R83","U83","L12","D49","R71","U7","L72")
+    val w2 = Array("U62","R66","U55","R34","D71","R55","D58","R83")
+
+//    val w1 = Array("R98","U47","R26","D63","R33","U87","L62","D20","R33","U53","R51")
+//    val w2 = Array("U98","R91","D20","R16","D67","R40","U7","R15","U6","R7")
+
+    populateWire(w1)
+    populateWire(w2)
+//    printMatrix()
+    getShortestIntersectionDistance
   }
 }
 
