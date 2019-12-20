@@ -1,33 +1,39 @@
+import scala.collection.mutable.ArrayBuffer
+
 class Day4Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
+  val matches = ArrayBuffer.empty[String]
 
   private def evaluateCandidate(value: String): Boolean = {
-    var twoAdjacentAreSame = false
     var doesNotDecrease = true
+    val digitMap = collection.mutable.Map(
+      '0' -> 0, '1' -> 0, '2' -> 0, '3' -> 0,
+      '4' -> 0, '5' -> 0, '6' -> 0, '7' -> 0,
+      '8' -> 0, '9' -> 0
+    )
 
     for (i <- 0 until value.length) {
       if (i + 1 < value.length) {
         if (value(i) == value(i + 1))
-          twoAdjacentAreSame = true
+          digitMap(value(i)) = digitMap(value(i)) + 1
         if (value(i + 1).toInt < value(i).toInt)
           doesNotDecrease = false
       }
     }
 
-    twoAdjacentAreSame && doesNotDecrease
+    val adjacentMatches = digitMap.find(pair => pair._2 > 0 && pair._2 == 1)
+    doesNotDecrease && adjacentMatches.nonEmpty
   }
 
   override def solve(): Int = {
     val Array(min, max) = inputLines.head.split('-')
-    var matches = 0
 
     for (candidate <- min.toInt to max.toInt) {
       if (evaluateCandidate(candidate.toString)) {
-        println(s"Match found: $candidate")
-        matches += 1
+        matches += candidate.toString
       }
     }
 
-    matches
+    matches.length
   }
 }
 
@@ -37,5 +43,3 @@ object Day4 {
     println(runner.solve())
   }
 }
-
-
