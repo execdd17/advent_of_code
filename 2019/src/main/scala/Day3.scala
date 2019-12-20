@@ -7,20 +7,6 @@ class Day3Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
   val wire1Paths = ArrayBuffer.empty[Position]
   val wire2Paths = ArrayBuffer.empty[Position]
 
-  //  private def printMatrix(): Unit = {
-//    for (row <- 0 until numRows) {
-//      for (column <- 0 until numCols) {
-//        matrix(row)(column) match {
-//          case -1 => print("O")
-//          case 0 => print(".")
-//          case 1 => print("*")
-//          case 2 => print("X")
-//        }
-//      }
-//      println()
-//    }
-//  }
-
   private def populateWire(movements: Array[String], paths: ArrayBuffer[Position]): Unit = {
     var currRow = 0
     var currCol = 0
@@ -54,11 +40,23 @@ class Day3Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
     }
   }
 
-  private def getShortestIntersectionDistance(points: Set[Position]): Int = {
+  private def getShortestManhattanDistance(positions: Set[Position]): Int = {
     var shortest = Int.MaxValue
 
-    points.foreach { point =>
-      val distance = math.abs(0 - point.row) + math.abs(0 - point.column)
+    positions.foreach { position =>
+      val distance = math.abs(0 - position.row) + math.abs(0 - position.column)
+      if (distance < shortest)
+        shortest = distance
+    }
+
+    shortest
+  }
+
+  private def getQuickestIntersectionSum(positions: Set[Position]): Int = {
+    var shortest = Int.MaxValue
+
+    positions.foreach {  position =>
+      val distance = (wire1Paths.indexOf(position) + 1) + (wire2Paths.indexOf(position)) + 1
       if (distance < shortest)
         shortest = distance
     }
@@ -69,7 +67,7 @@ class Day3Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
   override def solve(): Int = {
 //    val w1 = Array("R75","D30","R83","U83","L12","D49","R71","U7","L72")
 //    val w2 = Array("U62","R66","U55","R34","D71","R55","D58","R83")
-
+//
 //    val w1 = Array("R98","U47","R26","D63","R33","U87","L62","D20","R33","U53","R51")
 //    val w2 = Array("U98","R91","D20","R16","D67","R40","U7","R15","U6","R7")
 
@@ -79,8 +77,8 @@ class Day3Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
     populateWire(w1, wire1Paths)
     populateWire(w2, wire2Paths)
     val intersections = wire1Paths.toSet.intersect(wire2Paths.toSet)
-    //    printMatrix()
-    getShortestIntersectionDistance(intersections)
+//    getShortestManhattanDistance(intersections)
+    getQuickestIntersectionSum(intersections)
   }
 }
 
