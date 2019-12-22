@@ -10,19 +10,127 @@ import ParameterMode._
 
 case class Parameter(value: Int, mode: ParameterMode)
 
-case class Instruction(opcode: Int, parameters: Array[Parameter], length: Int) {
-  def isAddition: Boolean = opcode == 1
-  def isMultiplication: Boolean = opcode == 2
-  def isInput: Boolean = opcode == 3
-  def isOutput: Boolean = opcode == 4
-  def isJumpIfTrue: Boolean = opcode == 5
-  def isJumpIfFalse: Boolean = opcode == 6
-  def isLessThan: Boolean = opcode == 7
-  def isEqual: Boolean = opcode == 8
-  def isHalt: Boolean = opcode == 99
+class AdditionInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    val resolvedParams = parameters.take(2).map(param => resolveParamValue(memory, param))
+    memory(parameters(2).value) = resolvedParams(0) + resolvedParams(1)
+    instructionPointer + length
+  }
 }
 
-case object Instruction {
+class InputInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    val userInput = StdIn.readInt()
+    memory(parameters(0).value) = userInput
+    instructionPointer + length
+  }
+}
+
+class MultiplicationInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    val resolvedParams = parameters.take(2).map(param => resolveParamValue(memory, param))
+    memory(parameters(2).value) = resolvedParams(0) * resolvedParams(1)
+    instructionPointer + length
+  }
+}
+
+class OutputInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    println(resolveParamValue(memory, parameters(0)))
+    instructionPointer + length
+  }
+}
+
+class HaltInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    -1
+  }
+}
+
+class JumpIfTrueInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    if (resolveParamValue(memory, parameters(0)) != 0) {
+      resolveParamValue(memory, parameters(1))
+    } else {
+      instructionPointer + length
+    }
+  }
+}
+
+class JumpIfFalseInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    if (resolveParamValue(memory, parameters(0)) == 0) {
+      resolveParamValue(memory, parameters(1))
+    } else {
+      instructionPointer + length
+    }
+  }
+}
+
+class IsLessThanInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    val isLessThan = resolveParamValue(memory, parameters(0)) <
+      resolveParamValue(memory, parameters(1))
+
+    if (isLessThan) {
+      memory(parameters(2).value) = 1
+    } else {
+      memory(parameters(2).value) = 0
+    }
+
+    instructionPointer + length
+  }
+}
+
+class IsEqualToInstruction(opcode: Int, parameters: Array[Parameter], length: Int)
+  extends Instruction(opcode, parameters, length) {
+
+  override def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int = {
+    val isEqualTo = resolveParamValue(memory, parameters(0)) ==
+      resolveParamValue(memory, parameters(1))
+
+    if (isEqualTo) {
+      memory(parameters(2).value) = 1
+    } else {
+      memory(parameters(2).value) = 0
+    }
+
+    instructionPointer + length
+  }
+}
+
+
+abstract class Instruction(val opcode: Int,
+                           val parameters: Array[Parameter],
+                           val length: Int) {
+
+  def resolveParamValue(memory: ArrayBuffer[Int], parameter: Parameter): Int = {
+    if (parameter.mode == POSITIONAL)
+      memory(parameter.value)
+    else
+      parameter.value
+  }
+
+  def execute(memory: ArrayBuffer[Int], instructionPointer: Int): Int
+}
+
+object Instruction {
   private def getLengthForCode(code: String): Int = {
     val fourLengthInstr = code.endsWith("1") || code.endsWith("2") ||
       code.endsWith("7") || code.endsWith("8")
@@ -66,7 +174,18 @@ case object Instruction {
         throw new IllegalArgumentException(s"Encountered illegal parameter mode [${parameterModes(i)}]")
     }
 
-    new Instruction(opcode = actualOpcode.toInt, parameters = descriptiveParams.toArray, instructionLength)
+    val instruction:Instruction = actualOpcode.toInt match {
+      case 1 => new AdditionInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 2 => new MultiplicationInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 3 => new InputInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 4 => new OutputInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 5 => new JumpIfTrueInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 6 => new JumpIfFalseInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 7 => new IsLessThanInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 8 => new IsEqualToInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+      case 99 => new HaltInstruction(actualOpcode.toInt, descriptiveParams.toArray, instructionLength)
+    }
+    instruction
   }
 }
 
@@ -81,67 +200,14 @@ class Day5Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
       parameter.value
   }
 
-  private def handleArithmeticInstruction(instruction: Instruction, memory: ArrayBuffer[Int]): Unit = {
-    val resolvedParams = instruction.parameters.take(2).map(param => resolveParamValue(param))
-
-    if (instruction.isMultiplication) {
-      memory(instruction.parameters(2).value) = resolvedParams(0) * resolvedParams(1)
-    } else if (instruction.isAddition) {
-      memory(instruction.parameters(2).value) = resolvedParams(0) + resolvedParams(1)
-    } else {
-      throw new IllegalArgumentException("Unrecognized arithmetic operation")
-    }
-  }
-
   override def solve(): Int = {
     var instrPtr = 0
-    var continue = true
 
-    while (continue) {
+    while (instrPtr != -1) {
       val instruction = Instruction.apply(memory.toArray.slice(instrPtr, memory.length))
-
-      if (instruction.isHalt) {
-        continue = false
-      } else if (instruction.isInput) {
-        val userInput = StdIn.readInt()
-        memory(instruction.parameters(0).value) = userInput
-        instrPtr += instruction.length
-      } else if (instruction.isOutput) {
-        println(resolveParamValue(instruction.parameters(0)))
-        instrPtr += instruction.length
-      } else if (instruction.isAddition || instruction.isMultiplication) {
-        handleArithmeticInstruction(instruction, memory)
-        instrPtr += instruction.length
-      } else if (instruction.isJumpIfTrue) {
-        if (resolveParamValue(instruction.parameters(0)) != 0) {
-          instrPtr = resolveParamValue(instruction.parameters(1))
-        } else {
-          instrPtr += instruction.length
-        }
-      } else if (instruction.isJumpIfFalse) {
-        if (resolveParamValue(instruction.parameters(0)) == 0) {
-          instrPtr = resolveParamValue(instruction.parameters(1))
-        } else {
-          instrPtr += instruction.length
-        }
-      } else if (instruction.isLessThan) {
-        if (resolveParamValue(instruction.parameters(0)) < resolveParamValue(instruction.parameters(1))) {
-          memory(instruction.parameters(2).value) = 1
-        } else {
-          memory(instruction.parameters(2).value) = 0
-        }
-        instrPtr += instruction.length
-      } else if (instruction.isEqual) {
-        if (resolveParamValue(instruction.parameters(0)) == resolveParamValue(instruction.parameters(1))) {
-          memory(instruction.parameters(2).value) = 1
-        } else {
-          memory(instruction.parameters(2).value) = 0
-        }
-        instrPtr += instruction.length
-      } else {
-        throw new IllegalArgumentException(s"Encountered invalid opcode [${instruction.opcode}]")
-      }
+      instrPtr = instruction.execute(memory, instrPtr)
     }
+
     -1 // this is only here because the method has to return an Int
   }
 }
