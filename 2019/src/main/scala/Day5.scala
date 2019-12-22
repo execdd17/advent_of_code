@@ -11,26 +11,31 @@ import ParameterMode._
 case class Parameter(value: Int, mode: ParameterMode)
 
 case class Instruction(opcode: Int, parameters: Array[Parameter], length: Int) {
-  def isInput: Boolean = opcode == 3
-
-  def isOutput: Boolean = opcode == 4
-
   def isAddition: Boolean = opcode == 1
-
   def isMultiplication: Boolean = opcode == 2
-
+  def isInput: Boolean = opcode == 3
+  def isOutput: Boolean = opcode == 4
+  def isJumpIfTrue: Boolean = opcode == 5
+  def isJumpIfFalse: Boolean = opcode == 6
+  def isLessThan: Boolean = opcode == 7
+  def isEqual: Boolean = opcode == 8
   def isHalt: Boolean = opcode == 99
 }
 
 case object Instruction {
   private def getLengthForCode(code: String): Int = {
-    if (code.endsWith("1") || code.endsWith("2")) {
+    val fourLengthInstr = code.endsWith("1") || code.endsWith("2") ||
+      code.endsWith("7") || code.endsWith("8")
+
+    if (fourLengthInstr) {
       4
     } else if (code.endsWith("3") || code.endsWith("4")) {
       2
-    } else if (code.endsWith("99"))
+    } else if (code.endsWith("99")) {
       1
-    else {
+    } else if (code.endsWith("5") || code.endsWith("6")) {
+      3
+    } else {
       throw new IllegalArgumentException(s"invalid opcode [$code]")
     }
   }
@@ -94,30 +99,57 @@ class Day5Puzzle(inputLoc: String) extends Puzzle(inputLoc) {
 
     while (continue) {
       val instruction = Instruction.apply(memory.toArray.slice(instrPtr, memory.length))
-      instrPtr += instruction.length
 
       if (instruction.isHalt) {
         continue = false
       } else if (instruction.isInput) {
-        //        val userInput = StdIn.readInt()
-        //        input(instruction.parameters(0)) = userInput
-        memory(instruction.parameters(0).value) = 1 //TODO: take this out
+        val userInput = StdIn.readInt()
+        memory(instruction.parameters(0).value) = userInput
+        instrPtr += instruction.length
       } else if (instruction.isOutput) {
         println(resolveParamValue(instruction.parameters(0)))
+        instrPtr += instruction.length
       } else if (instruction.isAddition || instruction.isMultiplication) {
         handleArithmeticInstruction(instruction, memory)
+        instrPtr += instruction.length
+      } else if (instruction.isJumpIfTrue) {
+        if (resolveParamValue(instruction.parameters(0)) != 0) {
+          instrPtr = resolveParamValue(instruction.parameters(1))
+        } else {
+          instrPtr += instruction.length
+        }
+      } else if (instruction.isJumpIfFalse) {
+        if (resolveParamValue(instruction.parameters(0)) == 0) {
+          instrPtr = resolveParamValue(instruction.parameters(1))
+        } else {
+          instrPtr += instruction.length
+        }
+      } else if (instruction.isLessThan) {
+        if (resolveParamValue(instruction.parameters(0)) < resolveParamValue(instruction.parameters(1))) {
+          memory(instruction.parameters(2).value) = 1
+        } else {
+          memory(instruction.parameters(2).value) = 0
+        }
+        instrPtr += instruction.length
+      } else if (instruction.isEqual) {
+        if (resolveParamValue(instruction.parameters(0)) == resolveParamValue(instruction.parameters(1))) {
+          memory(instruction.parameters(2).value) = 1
+        } else {
+          memory(instruction.parameters(2).value) = 0
+        }
+        instrPtr += instruction.length
       } else {
         throw new IllegalArgumentException(s"Encountered invalid opcode [${instruction.opcode}]")
       }
     }
-    999999
+    -1 // this is only here because the method has to return an Int
   }
 }
 
 object Day5 {
   def main(args: Array[String]): Unit = {
     val runner = new Day5Puzzle("day5_input.txt")
-    println(runner.solve())
+    runner.solve()
   }
 }
 
